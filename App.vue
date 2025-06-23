@@ -14,4 +14,11 @@
 
 <style>
 	/*每个页面公共css */
+	page {
+		background-color: #279a9a;
+		height: 100%;
+		box-sizing: border-box;
+		padding: 50rpx;
+		font-weight: 800;
+	}
 </style>

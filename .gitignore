@@ -1,0 +1,2 @@
+# 忽略所有编译输出目录
+unpackage/dist/
