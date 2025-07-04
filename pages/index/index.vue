@@ -11,11 +11,11 @@
 					<text>最高：<text>{{maxScore}}</text></text>
 				</view>
 				<view class="menu" :class="{'menu-hover': isMenuActive}" @touchstart="isMenuActive = true"
-					@touchend="isMenuActive = false" @touchcancel="isMenuActive = false">
+					@touchend="isMenuActive = false" @touchcancel="isMenuActive = false" @click="openMenu">
 					菜单
 				</view>
 				<view class="recall" :class="{'recall-hover': isRecallActive}" @touchstart="isRecallActive = true"
-					@touchend="isRecallActive = false" @touchcancel="isRecallActive = false" @click="recall()">
+					@touchend="isRecallActive = false" @touchcancel="isRecallActive = false" @click="recall">
 					撤回
 				</view>
 			</view>
@@ -23,13 +23,17 @@
 			<view class="game-container">
 				<template v-for="(row, rowIndex) in matrix">
 					<view class="game-cell"
-						:class="cell > 0 && ['has-value',`value-${cell}`, animatedCells.has(`${rowIndex},${cellIndex}`) && 'appear-animation']"
+						:class="cell > 0 && ['has-value',`value-${cell}`, animatedCells.has(`${rowIndex},${cellIndex}`) && 'appear-animation', cell > 512 && 'big-value']"
 						v-for="(cell, cellIndex) in row" :key="`${rowIndex}${cellIndex}${cell}`">
 						{{cell > 0 ? cell : ''}}
 					</view>
 				</template>
 			</view>
 		</view>
+
+		<MenuPopup ref="menuPopup" @newGame="newGame"></MenuPopup>
+
+		<GameoverPopup ref="gameoverPopup" @renewGame="renewGame"></GameoverPopup>
 	</view>
 </template>
 
@@ -65,7 +69,14 @@
 			}
 		},
 		onLoad() {
+			this.maxScore = uni.getStorageSync('maxScore') || 0;
 			this.initGame();
+			// this.$nextTick(() => {
+			// 	this.$refs.gameoverPopup.open()
+			// })
+		},
+		onHide() {
+			this.saveMaxScore()
 		},
 		methods: {
 			getNextPosition(direction, i, j) {
@@ -85,11 +96,20 @@
 			initGame() {
 				// 重置分数
 				this.score = 0;
+				// 清空网格
+				this.matrix = [
+					[0, 0, 0, 0],
+					[0, 0, 0, 0],
+					[0, 0, 0, 0],
+					[0, 0, 0, 0],
+				];
+
 				// 随机添加两个数字块
 				this.addRandomTile();
 				this.addRandomTile();
 
 				this.lastMatrix = JSON.parse(JSON.stringify(this.matrix));
+
 			},
 
 			// 添加随机数字块，同样适用于后续移动后添加数字块
@@ -157,6 +177,11 @@
 						break;
 				}
 
+				// 重新计算最高分
+				if (this.score > this.maxScore) {
+					this.maxScore = this.score
+				}
+
 				// 生成一个新数据块
 				if (JSON.stringify(this.lastMatrix) !== JSON.stringify(this.matrix)) {
 					setTimeout(() => {
@@ -165,6 +190,9 @@
 				}
 
 				this.gameOver = this.checkGameOver();
+				if (this.gameOver) {
+					this.$refs.gameoverPopup.open()
+				}
 			},
 
 			// 单元格的下一个位置
@@ -292,6 +320,19 @@
 					deltaY > 0 ? this.move('down') : this.move('up');
 				}
 			},
+			saveMaxScore() {
+				uni.setStorageSync("maxScore", this.maxScore)
+			},
+			openMenu() {
+				this.$refs.menuPopup.open()
+			},
+			newGame() {
+				this.initGame()
+			},
+			renewGame() {
+				this.initGame()
+			}
+
 		}
 	}
 </script>
@@ -300,12 +341,12 @@
 	.block {
 		box-sizing: border-box;
 		padding: 50rpx;
+		padding-top: 150rpx;
 		height: 100%;
 	}
 
 	.container {
 		background-color: #279a9a;
-		font-family: "Comic Sans MS", cursive;
 		color: #fff;
 		height: 850rpx;
 		box-shadow: 0 0 0.8rem 0.2rem #1d7b7b;
@@ -330,7 +371,6 @@
 				font-size: 1.5rem;
 				padding: 0.3rem 0 0.5rem 0;
 
-				.score-font {}
 			}
 
 			.max-score-block {
@@ -364,10 +404,10 @@
 			aspect-ratio: 1/1;
 			background-color: #cbf6f7;
 			display: grid;
-			grid-template: repeat(4, 1fr) / repeat(4, 1fr);
+			grid-template: repeat(4, 1fr) / repeat(4, minmax(0, 1fr));
 			gap: 0.8rem;
 			padding: 0.8rem;
-			font-size: 2rem;
+			font-size: 1.7rem;
 			text-shadow: 0.1rem 0.1rem 0.2rem #2aacac;
 
 			.game-cell {
@@ -397,6 +437,10 @@
 				place-items: center;
 				box-shadow: 0.2rem 0.2rem 0.2rem #a4c5c5;
 
+			}
+
+			.big-value {
+				font-size: 1.4rem;
 			}
 
 			.appear-animation {
@@ -431,8 +475,5 @@
 				background-color: #382a6a;
 			}
 		}
-
-
-
 	}
 </style>

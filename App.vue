@@ -18,5 +18,6 @@
 		background-color: #279a9a;
 		height: 100%;
 		font-weight: 800;
+		font-family: "Comic Sans MS", cursive;
 	}
 </style>
