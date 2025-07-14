@@ -8,18 +8,12 @@
 				</view>
 			</view>
 		</uni-popup>
-
 	</view>
 </template>
 
 <script>
 	export default {
 		name: "GameoverPopup",
-		data() {
-			return {
-
-			};
-		},
 		methods: {
 			open() {
 				this.$refs.gPopup.open()

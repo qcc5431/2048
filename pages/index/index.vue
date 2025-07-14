@@ -71,29 +71,13 @@
 		onLoad() {
 			this.maxScore = uni.getStorageSync('maxScore') || 0;
 			this.initGame();
-			// this.$nextTick(() => {
-			// 	this.$refs.gameoverPopup.open()
-			// })
 		},
 		onHide() {
 			this.saveMaxScore()
 		},
 		methods: {
-			getNextPosition(direction, i, j) {
-				switch (direction) {
-					case 'up':
-						return [i + 1, j]
-					case 'down':
-						return [i - 1, j]
-					case 'left':
-						return [i, j + 1]
-					case 'right':
-						return [i, j - 1]
-					default:
-						return [i, j]
-				}
-			},
 			initGame() {
+				this.gameOver = false
 				// 重置分数
 				this.score = 0;
 				// 清空网格
@@ -109,7 +93,6 @@
 				this.addRandomTile();
 
 				this.lastMatrix = JSON.parse(JSON.stringify(this.matrix));
-
 			},
 
 			// 添加随机数字块，同样适用于后续移动后添加数字块
@@ -149,14 +132,30 @@
 				return false;
 			},
 
+			getNextPosition(direction, i, j) {
+				switch (direction) {
+					case 'up':
+						return [i + 1, j]
+					case 'down':
+						return [i - 1, j]
+					case 'left':
+						return [i, j + 1]
+					case 'right':
+						return [i, j - 1]
+					default:
+						return [i, j]
+				}
+			},
+
 			move(direction) {
+				if (this.gameOver) return;
+
 				this.direction = direction
 
 				this.animatedCells = new Set();
 
-				if (this.gameOver) return;
-
 				this.lastMatrix = JSON.parse(JSON.stringify(this.matrix));
+				this.lastScore = this.score;
 
 				switch (direction) {
 					// 向上移动，依次从第一行的四个单元格开始处理
@@ -186,12 +185,12 @@
 				if (JSON.stringify(this.lastMatrix) !== JSON.stringify(this.matrix)) {
 					setTimeout(() => {
 						this.addRandomTile();
-					}, 10);
-				}
 
-				this.gameOver = this.checkGameOver();
-				if (this.gameOver) {
-					this.$refs.gameoverPopup.open()
+						this.gameOver = this.checkGameOver();
+						if (this.gameOver) {
+							this.$refs.gameoverPopup.open()
+						}
+					}, 10);
 				}
 			},
 
@@ -239,7 +238,6 @@
 					this.$set(this.matrix[ni], nj, 0)
 					this.calcTileNewValue(i, j);
 				} else if (currentV === nextV) {
-					this.lastScore = this.score;
 					this.$set(this.matrix[i], j, currentV * 2)
 					this.$set(this.matrix[ni], nj, 0)
 					this.score += currentV * 2;
@@ -284,7 +282,6 @@
 				if (this.score !== this.lastScore) {
 					this.score = this.lastScore;
 				}
-
 			},
 
 			// 处理触摸开始
@@ -320,29 +317,30 @@
 					deltaY > 0 ? this.move('down') : this.move('up');
 				}
 			},
+
 			saveMaxScore() {
 				uni.setStorageSync("maxScore", this.maxScore)
 			},
+
 			openMenu() {
 				this.$refs.menuPopup.open()
 			},
+
 			newGame() {
 				this.initGame()
 			},
+
 			renewGame() {
 				this.initGame()
 			}
-
 		}
 	}
 </script>
 
 <style lang="scss">
 	.block {
-		box-sizing: border-box;
 		padding: 50rpx;
 		padding-top: 150rpx;
-		height: 100%;
 	}
 
 	.container {
@@ -370,7 +368,6 @@
 				position: relative;
 				font-size: 1.5rem;
 				padding: 0.3rem 0 0.5rem 0;
-
 			}
 
 			.max-score-block {
